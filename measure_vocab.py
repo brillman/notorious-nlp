@@ -58,8 +58,8 @@ def build_artists_list(directory='data/'):
                 print "We're still working! Currently counting {0}'s discography".format(artist.get_name())
             num_songs += len(artist.songs)
             num_words += artist.total_words()
-           # if artist.average_unique_words() != 0:
-           #     artists.append(artist)
+            if artist.average_unique_words() != 0:
+                artists.append(artist)
         #my scraper resulted in a few empty .json files (if the artists had no lyrics/songs associated with them)
         #we want to ignore those files
         except AttributeError, e:  
@@ -67,7 +67,7 @@ def build_artists_list(directory='data/'):
         except ValueError, e:       #.DS_STORE, .git files, etc throw an error
             print "something went wrong with filename {0}".format(filename)
           
-    print "Corpus contains:\n\t{0} artists\n\t{1} songs\n\t {2} words ".format(num_artists, num_songs, num_words)
+    print "Corpus contains:\n\t{0} artists\n\t{1} songs\n\t{2} words ".format(num_artists, num_songs, num_words)
 
     return artists
 
@@ -91,7 +91,7 @@ def rank_by_unique_words(artists, display=10):
     for artist in artists[-display:]:
         print "{0}'s unique words/song: {1} unique words/song (on average)".format(artist.get_name(), artist.average_unique_words())
     
-    return artists
+    #return artists
 
 def rank_by_average_song_length(artists, display=10):
     """Takes a list of artist objects, ranks them by average song length.  Returns the re-ordered list.
@@ -105,7 +105,7 @@ def rank_by_average_song_length(artists, display=10):
     for artist in artists[-display:]:
         print "{0}'s avg song length: {1} unique words/song (on average)".format(artist.get_name(), artist.average_song_length())
     
-    return artists
+    #return artists
 
 def rank_by_vocab_ratio(artists, display=10):
     """Takes a list of artist objects and ranks them by a ratio of unique words:total words, computed across
@@ -115,10 +115,10 @@ def rank_by_vocab_ratio(artists, display=10):
     for artist in artists[:display]:
         print "{0}'s vocab ratio: {1} unique words/song (on average)".format(artist.get_name(), artist.average_vocab_ratio())
           
-    for artist in artists:
+    for artist in artists[-display:]:
         print "{0}'s vocab ratio: {1} unique words/song (on average)".format(artist.get_name(), artist.average_vocab_ratio())
         
-    return artists
+    #return artists
     
 def rank_by_most_songs(artists, display=10):
     artists = sorted(artists, key=lambda artist:len(artist.songs))
@@ -126,17 +126,17 @@ def rank_by_most_songs(artists, display=10):
     for artist in artists[:display]:
         print "{0} has {1} songs in the corpus".format(artist.get_name(), len(artist.songs))
           
-    for artist in artists:
+    for artist in artists[-display:]:
         print "{0} has {1} songs in the corpus".format(artist.get_name(), len(artist.songs))
         
-    return artists
+   # return artists
 
 def main():
     artists = build_artists_list()
-    artists = rank_by_unique_words(artists)
-    artists = rank_by_average_song_length(artists)
-    artists = rank_by_vocab_ratio(artists)
-    artists = rank_by_most_songs(artists)
+    #rank_by_unique_words(artists)
+    #rank_by_average_song_length(artists)
+    #rank_by_vocab_ratio(artists)
+    #rank_by_most_songs(artists)
     
 if __name__ == '__main__':
     main()
