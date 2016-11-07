@@ -1,0 +1,6 @@
+This file includes all code from the following posts:
+
+1. http://notorious-nlp.tumblr.com/post/152837441235/hip-hop-artists-by-vocabulary-size-and-a-totally
+2.  http://notorious-nlp.tumblr.com/post/152836623575/pushin-weight
+
+Note that each directory is meant to function as an independent unit — the code here is enough to calculate everything in the above posts (though you’ll need your own hip hop corpus).  Core modules like helper.py and artists.py will not be identical across different directories

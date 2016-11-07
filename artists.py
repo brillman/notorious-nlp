@@ -1,4 +1,5 @@
 from collections import defaultdict
+import json
 
 class Song(object):
     """representation of a song"""
@@ -24,6 +25,21 @@ class Song(object):
             unique_words[lyric] += 1
             
         return len(unique_words.keys())
+    
+    def get_hip_hop_score_song(self, word_weights):
+        """returns the hip hop score for a given song by averaging the hip hop
+        weights of all words in that song."""
+        num_words, total_score = 0, 1
+        for word in self.get_lyrics():
+            try:
+                score = word_weights[word]['score']
+                total_score += score
+                num_words += 1
+            except KeyError, e:
+                pass
+        
+        final_score = total_score/float(num_words)
+        return final_score
     
     
 class Album(object):
@@ -97,6 +113,19 @@ class Artist(object):
         
         return ratio
     
+    def get_hip_hop_score(self, word_weights):
+        """returns a score of how 'hip hop' an artist's vocabulary is, by measuing the hip hop
+        score of each individual word they use"""
+        num_songs = len(self.songs)
+        total_score = 0
+        for song in self.songs:
+            score = song.get_hip_hop_score_song(word_weights)
+            total_score += score
     
+        try:
+            final_score = total_score/float(num_songs)
+        except ZeroDivisionError, e:
+            final_score = 0
         
+        return final_score
     
