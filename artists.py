@@ -1,4 +1,5 @@
 from collections import defaultdict
+from nltk.corpus import stopwords
 import json
 
 class Song(object):
@@ -9,6 +10,7 @@ class Song(object):
         self.artist = artist
         self.album = album
         self.num_words = len(lyrics.split())
+        self.word_frequencies = defaultdict(int)    #this isn't implemented yet!
         
     def get_title(self):
         return self.title
@@ -21,7 +23,7 @@ class Song(object):
     
     def get_num_unique_words(self):
         unique_words = defaultdict(int)
-        for lyric in self.lyrics.split(' '):
+        for lyric in self.lyrics.replace('\n',' ').split(' '):
             unique_words[lyric] += 1
             
         return len(unique_words.keys())
@@ -61,6 +63,7 @@ class Artist(object):
         self.label = 'Label unknown'
         self.songs = []
         self.albums = []
+        self.word_frequencies = defaultdict(int)
     
     #Get functions    
     def get_name(self):
@@ -113,6 +116,19 @@ class Artist(object):
         
         return ratio
     
+    def determine_word_frequencies(self):
+        """Sets a dictionary of word frequencies across all of the artists songs.  If the
+        count has already been set, lets the user know.  Ignores stopwords"""
+        if self.word_frequencies != {}:
+            print "Word frequencies for {0} already determined!".format(self.get_ascii_name())
+            return True
+        for song in self.songs:
+            for word in song.lyrics.replace('\n',' ').split(' '):
+                if word not in stopwords.words('english'):
+                    self.word_frequencies[word] += 1
+        
+        return True
+    
     def get_hip_hop_score(self, word_weights):
         """returns a score of how 'hip hop' an artist's vocabulary is, by measuing the hip hop
         score of each individual word they use"""
@@ -128,4 +144,13 @@ class Artist(object):
             final_score = 0
         
         return final_score
+    
+    def get_lyrics_as_text(self):
+        """returns the lyrics from each song in the artists discography as a single
+        string"""
+        text = ''
+        for song in self.songs:
+            text += song.get_lyrics()
+        
+        return text
     

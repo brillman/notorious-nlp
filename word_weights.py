@@ -17,7 +17,7 @@ def get_hip_hop_counts(lyrics_corpus):
     words_examined = 0
     counter = Counter()
     for word in lyrics_corpus.words():
-        if word not in stopwords.words():
+        if word not in stopwords.words('english'):
             counter[word] += 1
             words_examined += 1
         if words_examined % 100000 == 0:

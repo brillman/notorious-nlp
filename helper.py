@@ -11,6 +11,24 @@ def load_file(filename):
         data = json.load(data_file, encoding='utf8') 
     return data
 
+def make_text(directory='data/'):
+    """
+    transforms all the song lyrics present in a .json data file into a single string.
+    this string can be fed into other modules, including word cloud creation functions
+    """
+    text = ''
+    for filename in os.listdir(directory):
+        try:
+            artist = build_artist(directory+filename)
+            for song in artist.songs:
+                text += song.get_lyrics()
+        except AttributeError, e:
+            pass
+        except ValueError, e:
+            print "something went wrong with filename {0}".format(filename)
+    
+    return text
+
 def make_corpus_from_directory(directory, output_name):
     """This function iterates over the json documents in data/ to build a .txt 'corpus' object
     that will be compatible with various nltk modules.
@@ -81,3 +99,10 @@ def replace_punctuation(text, replace_with=' '):
     replace_function = string.maketrans(string.punctuation, replace_with*len(string.punctuation))
     text = text.translate(replace_function)
     return text.lower()
+
+def count():
+    i = ['neighba', 'make', 'pop', 'got', 'eye', 'true', 'real', 'hit', 'love', 'street', 'way', 'grindin',
+         'will', 'kid', 'life', 'block', 'know', 'keep', 'hold', 'shit', 'stop', 'hard', 'man', 'time', 'rec',
+         'good', 'girl', 'want', 'still', 'one', 'feel', 'cause', 'deck', 'respect', 'back', 'ya', 'take', 'll']
+    m = ['yeah', 'love', 'right', 'll', 'go', 'now', 'neighba', 'back', 'game', 'way', 'new', 'got', 'yo', 'ya',
+         ]
