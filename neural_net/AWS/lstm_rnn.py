@@ -1,5 +1,5 @@
 import os.path, os, sys, numpy, json, random
-sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir))
+#sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir))
 
 from keras.models import Sequential
 from keras.layers.core import Dense
@@ -48,7 +48,7 @@ def create_dataset(raw_text, char_to_int, n_chars, seq_length=100):
     dataX, dataY    =   [], []
     print "Finding patterns"
     for i in range(0, n_chars-seq_length, 1):
-    #for i in range(0, 100001):
+    #for i in range(0, 50001):
         seq_in = raw_text[i:i+seq_length]
         seq_out = raw_text[i+seq_length]
         dataX.append([char_to_int[char] for char in seq_in])
@@ -57,7 +57,7 @@ def create_dataset(raw_text, char_to_int, n_chars, seq_length=100):
         if i%1000000 == 0:
             print i, "patterns found"
             dataset = {'X':dataX, 'Y':dataY}
-            output_file = 'neural_net/dataset/patterns/output_data_{}.json'.format(i/1000000)
+            output_file = 'dataset/patterns/output_data_{}.json'.format(i/1000000)
             with open(output_file, 'w') as file_:
                 json.dump(dataset, file_)
             dataX, dataY = [], []
@@ -85,23 +85,29 @@ def define_model(X, y, drop_value=0.2, activation='softmax'):
     model = Sequential()
     model.add(LSTM(256, input_shape=(X.shape[1], X.shape[2])))
     model.add(Dropout(drop_value))
+    #12.8.16: added second layer with hope of improving output
+    #model.add(LSTM(256))
+    #model.add(Dropout(0.2))
     model.add(Dense(y.shape[1], activation=activation))
     model.compile(loss='categorical_crossentropy', optimizer='adam')
     print "Model successfully defined"
     return model
 
-def train_model(X, y, retrain_model=False, file_='neural_net/weights/weights-improvement-t2-19.hdf5'):
+def train_model(X, y, retrain_model=False, file_='weights/weights-improvement-t2-19.hdf5'):
     """trains a Keras model, storing the best weights each epoch"""
     if not retrain_model:
         model = define_model(X, y)
     if retrain_model:
         model = load_model(file_, X, y)
         print "loading weights from: {0}".format(file_)
-    filepath="neural_net/weights/weights-improvement-t2-{epoch:02d}.hdf5"
+    filepath="weights/weights-improvement-t2-{epoch:02d}.hdf5"
     #checkpoint = ModelCheckpoint(filepath, monitor='loss', verbose=1, save_best_only=True, mode='min')
     checkpoint = ModelCheckpoint(filepath, verbose=0, save_best_only=False, mode='auto')
     callbacks_list = [checkpoint]
-    model.fit(X, y, nb_epoch=20, batch_size=128, validation_split=0.01, callbacks=callbacks_list)
+    model.fit(X, y, nb_epoch=30, batch_size=2048, validation_split=0.01, callbacks=callbacks_list)
+    # summarize performance of the model
+    scores = model.evaluate(X, y, verbose=0)
+    print "Model accuracy: {0}".format(round(scores,2))
 
 def load_model(filename, X, y):
     """Defines a new model and then immediately assigns that model that best weights from a previous training"""
@@ -120,7 +126,7 @@ def generate_hip_hop(model, raw_dataset, int_to_char, char_dict, random_seed=Fal
     print "Seed: \n", ''.join([int_to_char[value] for value in pattern]), '\n'
 
     #generate characters
-    for i in range(1000):
+    for i in range(500):
         x = numpy.reshape(pattern, (1, len(pattern), 1))
         x = x/float(char_dict['n_vocab'])
         prediction = model.predict(x, verbose=0)
@@ -152,7 +158,7 @@ def load_patterns(filelist, directory, seq_length=100):
     n_patterns = len(dataX)
     return {'X':dataX, 'Y':dataY, 'n_patterns':n_patterns, 'seq_length':seq_length}
      
-def batch_train(char_dict, num_batches=8, directory='neural_net/dataset/patterns/'):
+def batch_train(char_dict, num_batches=8, directory='dataset/patterns/'):
     """This network is trained in multiple batches because of the size of the input data.
     This file trains the network in num_batches.  This file assumes that the entire raw dataset
     (of input/output vectors) has been pre-processed and stored in the specified directory. This
@@ -176,20 +182,23 @@ def batch_train(char_dict, num_batches=8, directory='neural_net/dataset/patterns
         y = dataset['y']
         int_to_char = char_dict['int_to_char']
         #train that model on that dataset
-        if batch == 0:
+        #if batch == 0:
             #build a new model the first time
-            train_model(X, y, retrain_model=False)
-        if batch != 0:
+        #    train_model(X, y, retrain_model=False)
+        if batch > -1:
             #retrain all subsequent models
-            train_model(X, y, retrain_model=True, file_='neural_net/weights/weights-improvement-t2-19.hdf5')
+            train_model(X, y, retrain_model=True, file_='weights/weights-improvement-t2-19.hdf5')
 
 
 def main(pre_process_data=False, generate_text=False, train_model=False, num_batches=2):
     #clean_corpus('txt_corpus/lyrics_corpus.txt', 'txt_corpus/lyrics_corpus_clean.txt')
     #load text
-    data_directory = 'neural_net/dataset/patterns/'
-    raw_text = load_corpus('lyrics_corpus_clean.txt')
-    char_dict = create_char_dict(raw_text)
+    data_directory = 'dataset/patterns/'
+    #raw_text = load_corpus('lyrics_corpus_clean.txt')
+    #char_dict = create_char_dict(raw_text)  
+    
+    with open('char_dict.json') as data_file:    
+        char_dict = json.load(data_file) 
     
     #the dataset may be too large for a computer to load at once.  Pre-process the data and store
     #in multiple files to avoid this issue
@@ -202,11 +211,13 @@ def main(pre_process_data=False, generate_text=False, train_model=False, num_bat
     
     #use the model to generate text
     if generate_text:
+        raw_text = load_corpus('lyrics_corpus_clean.txt')
+        char_dict = create_char_dict(raw_text) 
         #get a sample X, y dataset that the model can use as a seed for text generation
         #right now, the seed comes from a randomly pre_processed datafile in data_directory
-        filelist = os.listdir(directory)
+        filelist = os.listdir(data_directory)
         #file_choice = random.choice(filelist)
-        raw_dataset = load_patterns([random.choice(filelist)], directory)
+        raw_dataset = load_patterns([random.choice(filelist)], data_directory)
         #kerasize dataset to generate X and y pairs
         dataset = kerasize_data(raw_dataset, char_dict['n_vocab'])
         X = dataset['X']
@@ -214,9 +225,23 @@ def main(pre_process_data=False, generate_text=False, train_model=False, num_bat
         int_to_char = char_dict['int_to_char']
         
         #define and load the weighted model you want to use for generation
-        model = load_model('neural_net/weights/weights-improvement-t2-19.hdf5', X, y)
+        #just once
+        model = load_model('weights_12_8/weights-improvement-t2-29.hdf5', X, y) #weights-improvement-t2-19_old_v1.hdf5
         generate_hip_hop(model, raw_dataset, int_to_char, char_dict)
+        
+        #loop over multiple files
+        #all_weights = os.listdir('weights_12_8/')
+        #for weight in all_weights:
+        #    file_ = 'weights_12_8/'+weight
+        #    print "Using weights from file {0}".format(file_)
+        #    model = load_model(file_, X, y) #weights-improvement-t2-19_old_v1.hdf5
+        #    generate_hip_hop(model, raw_dataset, int_to_char, char_dict)
+        #    print "\n"*5
     
 if __name__ == '__main__':
+    #pre-process data and use it to train model
+    #main(pre_process_data=True, train_model=True, num_batches=2)
     #train the model
-    main(train_model=True, num_batches=3)
+    #main(train_model=True, num_batches=2)
+    #generate text
+    main(generate_text=True)
