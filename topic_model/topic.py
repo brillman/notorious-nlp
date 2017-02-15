@@ -1,4 +1,4 @@
-#from helper import make_text
+#to run: python topic.py <data directory> <num topics> <num iterations>
 
 import sys, re, collections
 from os import listdir
